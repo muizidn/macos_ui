@@ -47,7 +47,7 @@ class SidebarItems extends StatelessWidget {
   const SidebarItems({
     super.key,
     required this.items,
-    required this.currentIndex,
+    required this.currentSelected,
     required this.onChanged,
     this.itemSize = SidebarItemSize.medium,
     this.scrollController,
@@ -55,7 +55,7 @@ class SidebarItems extends StatelessWidget {
     this.unselectedColor,
     this.shape,
     this.cursor = SystemMouseCursors.basic,
-  }) : assert(currentIndex >= 0);
+  });
 
   /// The [SidebarItem]s used by the sidebar. If no items are provided,
   /// the sidebar is not rendered.
@@ -63,10 +63,10 @@ class SidebarItems extends StatelessWidget {
 
   /// The current selected index. It must be in the range of 0 to
   /// [items.length]
-  final int currentIndex;
+  final SidebarItem? currentSelected;
 
   /// Called when the current selected index should be changed.
-  final ValueChanged<int> onChanged;
+  final ValueChanged<SidebarItem> onChanged;
 
   /// The size specifications for all [items].
   ///
@@ -113,7 +113,6 @@ class SidebarItems extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty) return const SizedBox.shrink();
     assert(debugCheckHasMacosTheme(context));
-    assert(currentIndex < _allItems.length);
     final theme = MacosTheme.of(context);
     return IconTheme.merge(
       data: const IconThemeData(size: 20),
@@ -133,9 +132,9 @@ class SidebarItems extends StatelessWidget {
                 cursor: cursor!,
                 child: _DisclosureSidebarItem(
                   item: item,
-                  selectedItem: _allItems[currentIndex],
+                  selectedItem: currentSelected,
                   onChanged: (item) {
-                    onChanged(_allItems.indexOf(item));
+                    onChanged(item);
                   },
                 ),
               );
@@ -144,8 +143,8 @@ class SidebarItems extends StatelessWidget {
               cursor: cursor!,
               child: _SidebarItem(
                 item: item,
-                selected: _allItems[currentIndex] == item,
-                onClick: () => onChanged(_allItems.indexOf(item)),
+                selected: currentSelected == item,
+                onClick: () => onChanged(item),
               ),
             );
           }),
@@ -271,10 +270,10 @@ class _SidebarItem extends StatelessWidget {
           child: Container(
             width: 134.0 + theme.visualDensity.horizontal,
             height: itemSize.height + theme.visualDensity.vertical,
-            decoration: ShapeDecoration(
-              color: selected ? selectedColor : unselectedColor,
+            decoration: selected ? ShapeDecoration(
+              color: selectedColor,
               shape: item.shape ?? _SidebarItemsConfiguration.of(context).shape,
-            ),
+            ) : BoxDecoration(border: Border.all(color: selectedColor), borderRadius: const BorderRadius.all(Radius.circular(5.0))),
             padding: EdgeInsets.symmetric(
               vertical: 7 + theme.visualDensity.horizontal,
               horizontal: spacing,
