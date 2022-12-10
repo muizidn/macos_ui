@@ -49,6 +49,8 @@ class SidebarItems extends StatelessWidget {
     required this.items,
     required this.currentSelected,
     required this.onChanged,
+    this.currentSecondarySelected,
+    required this.onSecondaryChanged,
     this.itemSize = SidebarItemSize.medium,
     this.scrollController,
     this.selectedColor,
@@ -65,8 +67,14 @@ class SidebarItems extends StatelessWidget {
   /// [items.length]
   final SidebarItem? currentSelected;
 
+  /// The secondary selected, if selected for context menu
+  final SidebarItem? currentSecondarySelected;
+
   /// Called when the current selected index should be changed.
   final ValueChanged<SidebarItem> onChanged;
+
+  /// Called when the current secondary selected index should be changed.
+  final ValueChanged<SidebarItem>? onSecondaryChanged;
 
   /// The size specifications for all [items].
   ///
@@ -133,9 +141,9 @@ class SidebarItems extends StatelessWidget {
                 child: _DisclosureSidebarItem(
                   item: item,
                   selectedItem: currentSelected,
-                  onChanged: (item) {
-                    onChanged(item);
-                  },
+                  onChanged: onChanged,
+                  secondarySelectedItem: currentSecondarySelected,
+                  onSecondaryChanged: onSecondaryChanged,
                 ),
               );
             }
@@ -144,7 +152,13 @@ class SidebarItems extends StatelessWidget {
               child: _SidebarItem(
                 item: item,
                 selected: currentSelected == item,
+                secondarySelected: currentSecondarySelected == item,
                 onClick: () => onChanged(item),
+                onSecondaryClick: () {
+                  if (onSecondaryChanged != null) {
+                    onSecondaryChanged!(item);
+                  }
+                },
               ),
             );
           }),
@@ -190,6 +204,8 @@ class _SidebarItem extends StatelessWidget {
     required this.item,
     required this.onClick,
     required this.selected,
+    required this.secondarySelected,
+    this.onSecondaryClick,
   }) : super(key: key);
 
   /// The widget to lay out first.
@@ -200,10 +216,16 @@ class _SidebarItem extends StatelessWidget {
   /// Whether the item is selected or not
   final bool selected;
 
+  /// Whether the item is selected or not
+  final bool secondarySelected;
+
   /// A function to perform when the widget is clicked or tapped.
   ///
   /// Typically a [Navigator] call
   final VoidCallback? onClick;
+
+  /// A function to perform when the widget is right clicked.
+  final VoidCallback? onSecondaryClick;
 
   void _handleActionTap() async {
     onClick?.call();
@@ -261,6 +283,7 @@ class _SidebarItem extends StatelessWidget {
       selected: selected,
       child: GestureDetector(
         onTap: onClick,
+        onSecondaryTap: onSecondaryClick,
         child: FocusableActionDetector(
           focusNode: item.focusNode,
           descendantsAreFocusable: false,
@@ -273,7 +296,10 @@ class _SidebarItem extends StatelessWidget {
             decoration: selected ? ShapeDecoration(
               color: selectedColor,
               shape: item.shape ?? _SidebarItemsConfiguration.of(context).shape,
-            ) : BoxDecoration(border: Border.all(color: selectedColor), borderRadius: const BorderRadius.all(Radius.circular(5.0))),
+            ) : secondarySelected ? BoxDecoration(border: Border.all(color: selectedColor), borderRadius: const BorderRadius.all(Radius.circular(5.0))) : ShapeDecoration(
+              color: unselectedColor,
+              shape: item.shape ?? _SidebarItemsConfiguration.of(context).shape,
+            ),
             padding: EdgeInsets.symmetric(
               vertical: 7 + theme.visualDensity.horizontal,
               horizontal: spacing,
@@ -323,7 +349,9 @@ class _DisclosureSidebarItem extends StatefulWidget {
     Key? key,
     required this.item,
     this.selectedItem,
+    this.secondarySelectedItem,
     this.onChanged,
+    this.onSecondaryChanged,
   })  : assert(item.disclosureItems != null),
         super(key: key);
 
@@ -331,10 +359,17 @@ class _DisclosureSidebarItem extends StatefulWidget {
 
   final SidebarItem? selectedItem;
 
+  final SidebarItem? secondarySelectedItem;
+
   /// A function to perform when the widget is clicked or tapped.
   ///
   /// Typically a [Navigator] call
   final ValueChanged<SidebarItem>? onChanged;
+
+  /// A function to perform when the widget is right clicked.
+  ///
+  /// Typically a [Navigator] call
+  final ValueChanged<SidebarItem>? onSecondaryChanged;
 
   @override
   __DisclosureSidebarItemState createState() => __DisclosureSidebarItemState();
@@ -443,7 +478,9 @@ class __DisclosureSidebarItemState extends State<_DisclosureSidebarItem>
               trailing: widget.item.trailing,
             ),
             onClick: _handleTap,
+            onSecondaryClick: null,
             selected: false,
+            secondarySelected: false,
           ),
         ),
         ClipRect(
@@ -483,7 +520,9 @@ class __DisclosureSidebarItemState extends State<_DisclosureSidebarItem>
                 child: _SidebarItem(
                   item: item,
                   onClick: () => widget.onChanged?.call(item),
+                  onSecondaryClick: () => widget.onSecondaryChanged?.call(item),
                   selected: widget.selectedItem == item,
+                  secondarySelected: widget.secondarySelectedItem == item,
                 ),
               ),
             );
