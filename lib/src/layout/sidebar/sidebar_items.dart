@@ -50,7 +50,7 @@ class SidebarItems extends StatelessWidget {
     required this.currentSelected,
     required this.onChanged,
     this.currentSecondarySelected,
-    required this.onSecondaryChanged,
+    this.onSecondaryChanged,
     this.itemSize = SidebarItemSize.medium,
     this.scrollController,
     this.selectedColor,
@@ -74,7 +74,7 @@ class SidebarItems extends StatelessWidget {
   final ValueChanged<SidebarItem> onChanged;
 
   /// Called when the current secondary selected index should be changed.
-  final ValueChanged<SidebarItem>? onSecondaryChanged;
+  final ValueChanged<SidebarItem?>? onSecondaryChanged;
 
   /// The size specifications for all [items].
   ///
@@ -141,7 +141,12 @@ class SidebarItems extends StatelessWidget {
                 child: _DisclosureSidebarItem(
                   item: item,
                   selectedItem: currentSelected,
-                  onChanged: onChanged,
+                  onChanged: (item) {
+                    onChanged(item);
+                    if (onSecondaryChanged != null) {
+                      onSecondaryChanged!(null);
+                    }
+                  },
                   secondarySelectedItem: currentSecondarySelected,
                   onSecondaryChanged: onSecondaryChanged,
                 ),
@@ -153,7 +158,12 @@ class SidebarItems extends StatelessWidget {
                 item: item,
                 selected: currentSelected == item,
                 secondarySelected: currentSecondarySelected == item,
-                onClick: () => onChanged(item),
+                onClick: () {
+                  onChanged(item);
+                  if (onSecondaryChanged != null) {
+                    onSecondaryChanged!(null);
+                  }
+                },
                 onSecondaryClick: () {
                   if (onSecondaryChanged != null) {
                     onSecondaryChanged!(item);
@@ -293,13 +303,22 @@ class _SidebarItem extends StatelessWidget {
           child: Container(
             width: 134.0 + theme.visualDensity.horizontal,
             height: itemSize.height + theme.visualDensity.vertical,
-            decoration: selected ? ShapeDecoration(
-              color: selectedColor,
-              shape: item.shape ?? _SidebarItemsConfiguration.of(context).shape,
-            ) : secondarySelected ? BoxDecoration(border: Border.all(color: selectedColor), borderRadius: const BorderRadius.all(Radius.circular(5.0))) : ShapeDecoration(
-              color: unselectedColor,
-              shape: item.shape ?? _SidebarItemsConfiguration.of(context).shape,
-            ),
+            decoration: selected
+                ? ShapeDecoration(
+                    color: selectedColor,
+                    shape: item.shape ??
+                        _SidebarItemsConfiguration.of(context).shape,
+                  )
+                : secondarySelected
+                    ? BoxDecoration(
+                        border: Border.all(color: selectedColor),
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(5.0)))
+                    : ShapeDecoration(
+                        color: unselectedColor,
+                        shape: item.shape ??
+                            _SidebarItemsConfiguration.of(context).shape,
+                      ),
             padding: EdgeInsets.symmetric(
               vertical: 7 + theme.visualDensity.horizontal,
               horizontal: spacing,
