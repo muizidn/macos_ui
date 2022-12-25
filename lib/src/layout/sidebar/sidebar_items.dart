@@ -371,8 +371,7 @@ class _DisclosureSidebarItem extends StatefulWidget {
     this.secondarySelectedItem,
     this.onChanged,
     this.onSecondaryChanged,
-  })  : assert(item.disclosureItems != null),
-        super(key: key);
+  }) : super(key: key);
 
   final SidebarItem item;
 
@@ -468,27 +467,30 @@ class __DisclosureSidebarItemState extends State<_DisclosureSidebarItem>
           child: _SidebarItem(
             item: SidebarItem(
               label: widget.item.label,
-              leading: Row(
-                children: [
-                  RotationTransition(
-                    turns: _iconTurns,
-                    child: Icon(
-                      CupertinoIcons.chevron_right,
-                      size: 12.0,
-                      color: theme.brightness == Brightness.light
-                          ? MacosColors.black
-                          : MacosColors.white,
-                    ),
-                  ),
-                  if (hasLeading)
-                    Padding(
-                      padding: EdgeInsets.only(left: spacing),
-                      child: MacosIconTheme.merge(
-                        data: MacosIconThemeData(size: itemSize.iconSize),
-                        child: widget.item.leading!,
+              leading: GestureDetector(
+                onTap: () => _handleTap(),
+                child: Row(
+                  children: [
+                    RotationTransition(
+                      turns: _iconTurns,
+                      child: Icon(
+                        CupertinoIcons.chevron_right,
+                        size: 12.0,
+                        color: theme.brightness == Brightness.light
+                            ? MacosColors.black
+                            : MacosColors.white,
                       ),
                     ),
-                ],
+                    if (hasLeading)
+                      Padding(
+                        padding: EdgeInsets.only(left: spacing),
+                        child: MacosIconTheme.merge(
+                          data: MacosIconThemeData(size: itemSize.iconSize),
+                          child: widget.item.leading!,
+                        ),
+                      ),
+                  ],
+                ),
               ),
               unselectedColor: MacosColors.transparent,
               focusNode: widget.item.focusNode,
@@ -496,10 +498,16 @@ class __DisclosureSidebarItemState extends State<_DisclosureSidebarItem>
               shape: widget.item.shape,
               trailing: widget.item.trailing,
             ),
-            onClick: _handleTap,
-            onSecondaryClick: null,
-            selected: false,
-            secondarySelected: false,
+            onClick: () {
+              widget.onChanged?.call(widget.item);
+              setState(() {});
+            },
+            onSecondaryClick: () {
+              widget.onSecondaryChanged?.call(widget.item);
+              setState(() {});
+            },
+            selected: widget.selectedItem == widget.item,
+            secondarySelected: widget.secondarySelectedItem == widget.item,
           ),
         ),
         ClipRect(
@@ -529,20 +537,31 @@ class __DisclosureSidebarItemState extends State<_DisclosureSidebarItem>
         enabled: !closed,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: widget.item.disclosureItems!.map((item) {
+          children: (widget.item.disclosureItems ?? []).map((item) {
             return Padding(
               padding: EdgeInsets.only(
                 left: 24.0 + theme.visualDensity.horizontal,
               ),
               child: SizedBox(
                 width: double.infinity,
-                child: _SidebarItem(
-                  item: item,
-                  onClick: () => widget.onChanged?.call(item),
-                  onSecondaryClick: () => widget.onSecondaryChanged?.call(item),
-                  selected: widget.selectedItem == item,
-                  secondarySelected: widget.secondarySelectedItem == item,
-                ),
+                child: (item.disclosureItems ?? []).isEmpty
+                    ? _SidebarItem(
+                        item: item,
+                        onClick: () => widget.onChanged?.call(item),
+                        onSecondaryClick: () =>
+                            widget.onSecondaryChanged?.call(item),
+                        selected: widget.selectedItem == item,
+                        secondarySelected: widget.secondarySelectedItem == item,
+                      )
+                    : _DisclosureSidebarItem(
+                        item: item,
+                        selectedItem: widget.selectedItem,
+                        onChanged: (item) {
+                          widget.onChanged?.call(item);
+                        },
+                        secondarySelectedItem: widget.secondarySelectedItem,
+                        onSecondaryChanged: widget.onSecondaryChanged,
+                      ),
               ),
             );
           }).toList(),

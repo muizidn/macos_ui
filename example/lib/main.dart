@@ -51,6 +51,7 @@ class _WidgetGalleryState extends State<WidgetGallery> {
   bool value = false;
 
   int pageIndex = 0;
+  SidebarItem? currentSelected;
 
   late final searchFieldController = TextEditingController();
 
@@ -173,8 +174,11 @@ class _WidgetGalleryState extends State<WidgetGallery> {
           minWidth: 200,
           builder: (context, controller) {
             return SidebarItems(
-              currentIndex: pageIndex,
-              onChanged: (i) => setState(() => pageIndex = i),
+              currentSelected: currentSelected,
+              onChanged: (i) {
+                print("currentSelected ${i.label.toString()}");
+                setState(() => currentSelected = i);
+              },
               scrollController: controller,
               itemSize: SidebarItemSize.large,
               items: [
@@ -222,6 +226,16 @@ class _WidgetGalleryState extends State<WidgetGallery> {
                         ),
                       ),
                       label: Text('Colors'),
+                      disclosureItems: [
+                        const SidebarItem(
+                      label: Text('Child 1'),
+                      disclosureItems: [
+                        const SidebarItem(
+                      label: Text('Child3'),
+                    ),
+                      ]
+                    ),
+                      ]
                     ),
                     const SidebarItem(
                       leading: MacosIcon(CupertinoIcons.infinite),
